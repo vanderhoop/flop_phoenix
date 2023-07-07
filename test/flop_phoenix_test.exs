@@ -1596,7 +1596,7 @@ defmodule Flop.PhoenixTest do
       assert Floki.text(td) =~ "GEORGE"
     end
 
-    test "allows to set tr and td classes" do
+    test "allows to set tr and td classes via keyword lists" do
       html =
         render_table(
           opts: [
@@ -1611,6 +1611,23 @@ defmodule Flop.PhoenixTest do
       assert [_, _, _, _, _] = Floki.find(html, "th.bean")
       assert [_] = Floki.find(html, "tr.salt")
       assert [_, _, _, _, _] = Floki.find(html, "td.tolerance")
+    end
+
+    test "support of functions for supplying dynamic tr and td attrs based on row data" do
+      html =
+        render_table(
+          opts: [
+            tbody_tr_attrs: fn item ->
+              [class: item[:species]]
+            end,
+            tbody_td_attrs: fn item ->
+              [class: String.upcase(item[:species])]
+            end
+          ]
+        )
+
+      assert [_] = Floki.find(html, "tr.dog")
+      assert [_, _, _, _, _] = Floki.find(html, "td.DOG")
     end
 
     test "allows to set td class on action" do
