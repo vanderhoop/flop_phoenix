@@ -182,7 +182,7 @@ defmodule Flop.Phoenix.Table do
           <%= for col <- @col do %>
             <td
               :if={show_column?(col)}
-              {maybe_invoke_options_callback(@opts[:tbody_td_attrs], item)}
+              {@opts[:tbody_td_attrs]}
               {maybe_invoke_options_callback(Map.get(col, :attrs, []), item)}
               phx-click={@row_click && @row_click.(item)}
             >
@@ -191,7 +191,7 @@ defmodule Flop.Phoenix.Table do
           <% end %>
           <td
             :for={action <- @action}
-            {maybe_invoke_options_callback(@opts[:tbody_td_attrs], item)}
+            {@opts[:tbody_td_attrs]}
             {Map.get(action, :attrs, [])}
           >
             <%= render_slot(action, @row_item.(item)) %>

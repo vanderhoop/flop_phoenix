@@ -130,6 +130,30 @@ defmodule Flop.PhoenixTest do
     """
   end
 
+  defp test_table_with_dynamically_generated_attrs(assigns) do
+    ~H"""
+    <Flop.Phoenix.table
+      id="user-table"
+      event="sort"
+      items={[%{name: "Bruce Wayne", age: 8, occupation: "superhero"}]}
+      meta={%Flop.Meta{flop: %Flop{}}}
+    >
+      <:col
+        :let={user}
+        label="Name"
+        field={:name}
+        attrs={
+          fn item ->
+            [id: String.downcase(item.name) |> String.replace(" ", "-")]
+          end
+        }
+      >
+        <%= user.name %>
+      </:col>
+    </Flop.Phoenix.table>
+    """
+  end
+
   defp test_table_with_action(assigns) do
     assigns =
       assigns
@@ -1613,17 +1637,11 @@ defmodule Flop.PhoenixTest do
       assert [_, _, _, _, _] = Floki.find(html, "td.tolerance")
     end
 
-    test "support of functions for supplying dynamic tr and td attrs based on row data" do
+    test "support of functions for supplying dynamic td attrs based on row data" do
       html =
         render_table(
-          opts: [
-            tbody_tr_attrs: fn item ->
-              [class: item[:species]]
-            end,
-            tbody_td_attrs: fn item ->
-              [class: String.upcase(item[:species])]
-            end
-          ]
+          [],
+          &test_table_with_dynamically_generated_attrs/1
         )
 
       assert [_] = Floki.find(html, "tr.dog")
@@ -1654,6 +1672,16 @@ defmodule Flop.PhoenixTest do
       html = render_table([], &test_table_with_column_attrs/1)
       assert [_, _] = Floki.find(html, "td.name-column")
       assert [_, _] = Floki.find(html, "td.age-column")
+    end
+
+    test "adds dynamic attributes to rows and tds based on callback logic" do
+      html =
+        render_table(
+          [],
+          &test_table_with_dynamically_generated_attrs/1
+        )
+
+      assert [_] = Floki.find(html, "td#bruce-wayne")
     end
 
     test "doesn't render table if items list is empty" do
