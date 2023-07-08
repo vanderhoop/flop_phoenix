@@ -143,11 +143,7 @@ defmodule Flop.PhoenixTest do
         :let={user}
         label="Name"
         field={:name}
-        attrs={
-          fn item ->
-            [id: String.downcase(item.name) |> String.replace(" ", "-")]
-          end
-        }
+        attrs={@opts[:col_slot_attrs] || []}
       >
         <%= user.name %>
       </:col>
@@ -1638,18 +1634,17 @@ defmodule Flop.PhoenixTest do
       assert [_, _, _, _, _] = Floki.find(html, "td.tolerance")
     end
 
-    test "support of functions for supplying dynamic td attrs based on row data" do
+    test "support of functions for supplying dynamic tr attrs based on row data" do
       html =
         render_table(
           [
             items: [
-              %{name: "Bruce Wayne", age: 8, occupation: "Superhero"},
-              %{name: "April O'neil", age: 8, occupation: "Reporter"}
+              %{name: "Bruce Wayne", age: 42, occupation: "Superhero"},
+              %{name: "April O'Neil", age: 39, occupation: "Crime Reporter"}
             ],
             opts: [
               tbody_tr_attrs: fn item ->
-                IO.puts("firing")
-                [class: String.downcase(item.occupation)]
+                [class: String.downcase(item.occupation) |> String.replace(" ", "-")]
               end
             ]
           ],
@@ -1657,7 +1652,30 @@ defmodule Flop.PhoenixTest do
         )
 
       assert [_] = Floki.find(html, "tr.superhero")
-      assert [_] = Floki.find(html, "tr.reporter")
+      assert [_] = Floki.find(html, "tr.crime-reporter")
+    end
+
+    test "support of functions for supplying dynamic td attrs based on row data" do
+      html =
+        render_table(
+          [
+            items: [
+              %{name: "Mary Cratsworth-Shane", age: 99},
+              %{name: "Bart Harley-Jarvis", age: 1}
+            ],
+            opts: [
+              # this key is used in the test for readability/passage via assigns,
+              # but it is passed to a component's :col slot's `attrs` in real-world calls.
+              col_slot_attrs: fn item ->
+                [class: if(item.age > 17, do: "adult", else: "child")]
+              end
+            ]
+          ],
+          &test_table_with_dynamically_generated_attrs/1
+        )
+
+      assert [_] = Floki.find(html, "td.adult")
+      assert [_] = Floki.find(html, "td.child")
     end
 
     test "allows to set td class on action" do
@@ -1684,16 +1702,6 @@ defmodule Flop.PhoenixTest do
       html = render_table([], &test_table_with_column_attrs/1)
       assert [_, _] = Floki.find(html, "td.name-column")
       assert [_, _] = Floki.find(html, "td.age-column")
-    end
-
-    test "adds dynamic attributes to rows based on row data" do
-      html =
-        render_table(
-          [items: [%{name: "Bruce Wayne", age: 8, occupation: "superhero"}]],
-          &test_table_with_dynamically_generated_attrs/1
-        )
-
-      assert [_] = Floki.find(html, "td#bruce-wayne")
     end
 
     test "doesn't render table if items list is empty" do
