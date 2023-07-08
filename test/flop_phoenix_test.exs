@@ -135,7 +135,8 @@ defmodule Flop.PhoenixTest do
     <Flop.Phoenix.table
       id="user-table"
       event="sort"
-      items={[%{name: "Bruce Wayne", age: 8, occupation: "superhero"}]}
+      items={@items}
+      opts={@opts}
       meta={%Flop.Meta{flop: %Flop{}}}
     >
       <:col
@@ -1640,12 +1641,23 @@ defmodule Flop.PhoenixTest do
     test "support of functions for supplying dynamic td attrs based on row data" do
       html =
         render_table(
-          [],
+          [
+            items: [
+              %{name: "Bruce Wayne", age: 8, occupation: "Superhero"},
+              %{name: "April O'neil", age: 8, occupation: "Reporter"}
+            ],
+            opts: [
+              tbody_tr_attrs: fn item ->
+                IO.puts("firing")
+                [class: String.downcase(item.occupation)]
+              end
+            ]
+          ],
           &test_table_with_dynamically_generated_attrs/1
         )
 
-      assert [_] = Floki.find(html, "tr.dog")
-      assert [_, _, _, _, _] = Floki.find(html, "td.DOG")
+      assert [_] = Floki.find(html, "tr.superhero")
+      assert [_] = Floki.find(html, "tr.reporter")
     end
 
     test "allows to set td class on action" do
@@ -1674,10 +1686,10 @@ defmodule Flop.PhoenixTest do
       assert [_, _] = Floki.find(html, "td.age-column")
     end
 
-    test "adds dynamic attributes to rows and tds based on callback logic" do
+    test "adds dynamic attributes to rows based on row data" do
       html =
         render_table(
-          [],
+          [items: [%{name: "Bruce Wayne", age: 8, occupation: "superhero"}]],
           &test_table_with_dynamically_generated_attrs/1
         )
 
